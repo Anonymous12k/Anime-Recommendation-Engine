@@ -52,23 +52,23 @@ def recommend_anime(emotions=[], genres=[], top_n=10, match_all=False):
     return df_filtered.head(top_n)
 
 # Display recommendations
-if st.button("🎬 Recommend Anime") and selected_emotions:
-    results = recommend_anime(selected_emotions, selected_genres, top_n, match_all)
+if st.button("🎬 Recommend Anime"):
+    if selected_emotions:
+        results = recommend_anime(selected_emotions, selected_genres, top_n, match_all)
 
-    if not results.empty:
-        for _, row in results.iterrows():
-            st.markdown(f"### {row['title']} ({row['score']})")
-            st.image(row['image_url'], width=200)
-            st.write(f"**Genres:** {', '.join(row['genres'])}")
-            st.write(f"**Emotions:** {', '.join(row['emotion_tags'])}")
-            st.write(row['synopsis'])
-            if pd.notnull(row['trailer_url']):
-                st.video(row['trailer_url'])
-            if pd.notnull(row['watch_link']):
-                st.markdown(f"[🔗 Watch on MyAnimeList]({row['watch_link']})")
-            st.markdown("---")
+        if not results.empty:
+            for _, row in results.iterrows():
+                st.markdown(f"### {row['title']} ({row['score']})")
+                st.image(row['image_url'], width=200)
+                st.write(f"**Genres:** {', '.join(row['genres'])}")
+                st.write(f"**Emotions:** {', '.join(row['emotion_tags'])}")
+                st.write(row['synopsis'])
+                if pd.notnull(row['trailer_url']):
+                    st.video(row['trailer_url'])
+                if pd.notnull(row['watch_link']):
+                    st.markdown(f"[🔗 Watch on MyAnimeList]({row['watch_link']})")
+                st.markdown("---")
+        else:
+            st.warning("No anime found for the selected filters.")
     else:
-        st.warning("No anime found for the selected filters.")
-
-elif st.button("🎬 Recommend Anime"):
-    st.error("Please select at least one emotion.")
+        st.error("Please select at least one emotion.")
