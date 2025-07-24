@@ -16,11 +16,8 @@ df = load_data()
 st.title("🎭 Anime Emotion Recommender")
 st.write("Select an emotion to discover anime that matches your mood.")
 
-# ✅ Extract unique emotions
+# ✅ Extract unique emotions (cleaned)
 all_emotions = sorted({e for tags in df["emotion_tags"] for e in tags})
-
-# 🔍 DEBUG: Show emotion list
-st.write("📋 All Emotions Found:", all_emotions)
 
 # ✅ Select emotion from dropdown
 if all_emotions:
