@@ -2,10 +2,7 @@ import streamlit as st
 import pandas as pd
 import ast
 
-# Page config
-st.set_page_config(page_title="Anime Emotion Recommender 🎭", layout="wide")
-
-# Load data
+# Load Data
 @st.cache_data
 def load_data():
     df = pd.read_csv("anime_with_emotions.csv")
@@ -15,93 +12,72 @@ def load_data():
 
 df = load_data()
 
-# Initialize session state
+# Initialize session state for favourites
 if "favourites" not in st.session_state:
     st.session_state.favourites = []
 
-# Sidebar filters
-with st.sidebar:
-    st.header("🔎 Filter Your Search")
-    all_emotions = sorted({e.lower() for tags in df["emotion_tags"] for e in tags})
-    all_genres = sorted({g.lower() for tags in df["genres"] for g in tags})
-    selected_emotion = st.selectbox("🎭 Choose Emotion", all_emotions)
-    selected_genre = st.selectbox("🎬 Choose Genre (Optional)", ["All"] + all_genres)
-    top_n = st.slider("📊 Number of Recommendations", 1, 20, 10)
-    rating_threshold = st.slider("⭐ Minimum Rating", 0.0, 10.0, 7.0, 0.1)
-    show_explanations = st.checkbox("💡 Show Why These Were Recommended", value=True)
-
+# Title
 st.title("🎭 Anime Recommendation Engine Based on Emotions")
+st.write("Select your mood and discover anime tailored to your emotions and preferences.")
 
-# Recommendation Logic
+# Emotion Selection
+all_emotions = sorted({e for tags in df["emotion_tags"] for e in tags})
+selected_emotion = st.selectbox("🎯 Choose an Emotion", all_emotions)
+
+# Genre Selection
+all_genres = sorted({g for tags in df["genres"] for g in tags})
+selected_genres = st.multiselect("🎞️ Select Genre(s)", all_genres)
+
+# Number of Recommendations
+top_n = st.slider("📊 Number of Recommendations", 1, 20, 5)
+
+# Recommend Button
 if st.button("🎬 Recommend"):
     filtered_df = df.copy()
 
-    filtered_df = filtered_df[filtered_df["emotion_tags"].apply(lambda tags: selected_emotion in [e.lower() for e in tags])]
+    # Filter by emotion
+    filtered_df = filtered_df[filtered_df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
 
-    if selected_genre != "All":
-        filtered_df = filtered_df[filtered_df["genres"].apply(lambda genres: selected_genre in [g.lower() for g in genres])]
+    # Filter by genre
+    if selected_genres:
+        filtered_df = filtered_df[filtered_df["genres"].apply(
+            lambda g_list: any(g in g_list for g in selected_genres)
+        )]
 
-    filtered_df = filtered_df[filtered_df["score"] >= rating_threshold]
+    # Sort by score
     filtered_df = filtered_df.sort_values(by="score", ascending=False).head(top_n)
 
+    # Show Results
     if not filtered_df.empty:
+        st.subheader("🔍 Recommended Anime")
         for _, row in filtered_df.iterrows():
-            st.markdown(f"### 🎥 {row['title']}")
-            col1, col2 = st.columns([1, 3])
-            with col1:
-                st.image(row["image_url"], width=150)
-            with col2:
-                st.markdown(f"⭐ **Rating**: {row['score']} / 10")
-                st.markdown(f"🎭 **Emotions**: {', '.join(row['emotion_tags'])}")
-                st.markdown(f"📌 **Genres**: {', '.join(row['genres'])}")
-                if pd.notnull(row.get("synopsis")):
-                    st.write("📝 " + row["synopsis"][:300] + "...")
-                if pd.notnull(row.get("trailer_url")):
-                    st.video(row["trailer_url"])
-                if pd.notnull(row.get("watch_url")):
-                    st.markdown(f"[▶️ Watch Now]({row['watch_url']})")
+            st.markdown(f"### {row['title']} ({row['score']})")
+            st.image(row["image_url"], width=200)
+            st.write(f"📌 **Genres:** {', '.join(row['genres'])}")
+            st.write(f"🎭 **Emotions:** {', '.join(row['emotion_tags'])}")
+            st.write(row['synopsis'])
 
-                if show_explanations:
-                    st.success(f"🎯 **Matched for '{selected_emotion}' emotion**")
+            if pd.notnull(row['trailer_url']):
+                st.video(row['trailer_url'])
 
-                # Save to favourites button
-                if st.button(f"❤️ Save to Favourites", key=row["title"]):
-                    if row["title"] not in [anime["title"] for anime in st.session_state.favourites]:
-                        st.session_state.favourites.append({
-                            "title": row["title"],
-                            "image_url": row["image_url"],
-                            "score": row["score"],
-                            "genres": row["genres"],
-                            "emotion_tags": row["emotion_tags"],
-                            "watch_url": row.get("watch_url", ""),
-                            "trailer_url": row.get("trailer_url", "")
-                        })
-                        st.success("✅ Saved to favourites!")
-                    else:
-                        st.info("Already in favourites ❤️")
+            if pd.notnull(row['watch_link']):
+                st.markdown(f"[🔗 Watch Now]({row['watch_link']})")
 
+            if st.button(f"❤️ Save to Favourites", key=row["title"]):
+                if row["title"] not in st.session_state.favourites:
+                    st.session_state.favourites.append(row["title"])
+                    st.success(f"'{row['title']}' added to favourites!")
             st.markdown("---")
     else:
-        st.warning("😞 No anime matched your filters. Try adjusting them.")
+        st.warning("No anime found matching your filters.")
 
-# View Favourites Section
-st.markdown("## ⭐ Your Favourite Anime List")
-
+# Show Favourites
+st.subheader("⭐ Your Favourite Anime")
 if st.session_state.favourites:
-    for fav in st.session_state.favourites:
-        st.markdown(f"### 🎥 {fav['title']}")
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            st.image(fav["image_url"], width=150)
-        with col2:
-            st.markdown(f"⭐ **Rating**: {fav['score']} / 10")
-            st.markdown(f"🎭 **Emotions**: {', '.join(fav['emotion_tags'])}")
-            st.markdown(f"📌 **Genres**: {', '.join(fav['genres'])}")
-            if fav.get("trailer_url"):
-                st.video(fav["trailer_url"])
-            if fav.get("watch_url"):
-                st.markdown(f"[▶️ Watch Now]({fav['watch_url']})")
-        st.markdown("---")
+    for title in st.session_state.favourites:
+        st.write(f"🔖 {title}")
+    if st.button("🗑️ Clear Favourites"):
+        st.session_state.favourites = []
+        st.success("Favourites cleared!")
 else:
-    st.info("📭 You haven't saved any favourites yet. Start exploring!")
-
+    st.info("You haven't added any favourites yet.")
