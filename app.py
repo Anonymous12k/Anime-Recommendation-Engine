@@ -5,7 +5,7 @@ import ast
 # ------------------------ Load & Parse Data ------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("/mnt/data/anime_with_extended_emotions.csv")
+    df = pd.read_csv("/content/anime_with_extended_emotions.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     df["emotion_tags"] = df["emotion_tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     return df
