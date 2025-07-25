@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import ast
+import random
 
 # ------------------------ Page Config ------------------------
 st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
@@ -75,7 +76,7 @@ st.markdown("Find anime based on how you feel! 🖤")
 
 # ------------------------ Sidebar ------------------------
 st.sidebar.header("🧠 Select Your Emotion")
-emotion_options = sorted(set(e for sublist in df["emotion_tags"] for e in sublist))
+emotion_options = ["any"] + sorted(set(e for sublist in df["emotion_tags"] for e in sublist))
 selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
 
 # ------------------------ Navigation ------------------------
@@ -83,7 +84,7 @@ def go_home():
     st.session_state.page = "home"
 
 def open_anime_details(row):
-    st.session_state.selected_anime = row
+    st.session_state.selected_anime = row.to_dict()
     st.session_state.page = "details"
 
 # ------------------------ Anime Details Page ------------------------
@@ -95,7 +96,6 @@ if st.session_state.page == "details":
             <p><strong>Genre:</strong> {}</p>
             <p><strong>Emotions:</strong> {}</p>
             <p><strong>Synopsis:</strong> {}</p>
-            <br>
     """.format(
         anime["title"],
         ", ".join(anime["genres"]),
@@ -103,7 +103,9 @@ if st.session_state.page == "details":
         anime["synopsis"]
     ), unsafe_allow_html=True)
 
-    # Favorite toggle
+    if 'trailer_url' in anime and pd.notna(anime['trailer_url']):
+        st.markdown(f"<a href='{anime['trailer_url']}' target='_blank'>🎬 Watch Trailer</a>", unsafe_allow_html=True)
+
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove Favorite", key=f"remove_{anime['title']}"):
             st.session_state.favorites.remove(anime["title"])
@@ -111,14 +113,17 @@ if st.session_state.page == "details":
         if st.button("❤️ Add to Favorites", key=f"add_{anime['title']}"):
             st.session_state.favorites.append(anime["title"])
 
-    # Back
     if st.button("🔙 Back", key="back_btn"):
         go_home()
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ------------------------ Home Page ------------------------
 else:
-    filtered_df = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)]
+    if selected_emotion == "any":
+        filtered_df = df.sample(n=9)
+    else:
+        filtered_df = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)]
 
     if not filtered_df.empty:
         st.subheader(f"🎬 Recommended Anime for Emotion: {selected_emotion}")
@@ -157,8 +162,27 @@ else:
         <div class='scrollbox'>
     """, unsafe_allow_html=True)
     if st.session_state.favorites:
-        for fav in st.session_state.favorites:
-            st.markdown(f"✅ {fav}")
+        fav_df = df[df['title'].isin(st.session_state.favorites)]
+        fav_cols = st.columns(3)
+        for i, (_, row) in enumerate(fav_df.iterrows()):
+            with fav_cols[i % 3]:
+                with st.container():
+                    st.markdown(f"""
+                        <div class='anime-card'>
+                            <span class='anime-title'>{row['title']}</span><br>
+                            <strong>Genre:</strong> {', '.join(row['genres'])}<br>
+                    """, unsafe_allow_html=True)
+                    if pd.notna(row['image_url']):
+                        st.image(row['image_url'], use_container_width=True)
+                    else:
+                        st.markdown("<em>No image available</em>", unsafe_allow_html=True)
+
+                    if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
+                        open_anime_details(row)
+                    if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
+                        st.session_state.favorites.remove(row["title"])
+
+                    st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.write("No favorites selected yet.")
     st.markdown("</div>", unsafe_allow_html=True)
