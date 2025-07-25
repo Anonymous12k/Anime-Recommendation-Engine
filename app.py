@@ -1,4 +1,4 @@
-import streamlit as st
+""import streamlit as st
 import pandas as pd
 import ast
 import random
@@ -25,6 +25,9 @@ if "page" not in st.session_state:
 
 if "selected_anime" not in st.session_state:
     st.session_state.selected_anime = None
+
+if "home_animes" not in st.session_state:
+    st.session_state.home_animes = []
 
 # ------------------------ Styling ------------------------
 st.markdown("""
@@ -83,10 +86,6 @@ selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
 def go_home():
     st.session_state.page = "home"
 
-def open_anime_details(row):
-    st.session_state.selected_anime = row.to_dict()
-    st.session_state.page = "details"
-
 # ------------------------ Anime Details Page ------------------------
 if st.session_state.page == "details":
     anime = st.session_state.selected_anime
@@ -120,15 +119,19 @@ if st.session_state.page == "details":
 
 # ------------------------ Home Page ------------------------
 else:
-    if selected_emotion == "any":
-        filtered_df = df.sample(n=9)
-    else:
-        filtered_df = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)]
+    if not st.session_state.home_animes or selected_emotion != st.session_state.get("last_emotion"):
+        if selected_emotion == "any":
+            st.session_state.home_animes = df.sample(n=9).to_dict("records")
+        else:
+            st.session_state.home_animes = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)].sample(n=min(9, len(df))).to_dict("records")
+        st.session_state.last_emotion = selected_emotion
 
-    if not filtered_df.empty:
+    home_animes = st.session_state.home_animes
+
+    if home_animes:
         st.subheader(f"🎬 Recommended Anime for Emotion: {selected_emotion}")
         cols = st.columns(3)
-        for i, (_, row) in enumerate(filtered_df.iterrows()):
+        for i, row in enumerate(home_animes):
             with cols[i % 3]:
                 with st.container():
                     st.markdown(f"""
@@ -140,17 +143,22 @@ else:
 
                     if 'image_url' in row and pd.notna(row['image_url']):
                         st.image(row['image_url'], use_container_width=True)
-                        if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
-                            open_anime_details(row)
                     else:
                         st.markdown("<em>No image available</em>", unsafe_allow_html=True)
+
+                    if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
+                        st.session_state.selected_anime = row
+                        st.session_state.page = "details"
+                        st.experimental_rerun()
 
                     if row["title"] in st.session_state.favorites:
                         if st.button("❌ Remove Favorite", key=f"remove_{row['title']}_{i}"):
                             st.session_state.favorites.remove(row["title"])
+                            st.experimental_rerun()
                     else:
                         if st.button("❤️ Add to Favorites", key=f"add_{row['title']}_{i}"):
                             st.session_state.favorites.append(row["title"])
+                            st.experimental_rerun()
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
@@ -178,9 +186,12 @@ else:
                         st.markdown("<em>No image available</em>", unsafe_allow_html=True)
 
                     if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
-                        open_anime_details(row)
+                        st.session_state.selected_anime = row.to_dict()
+                        st.session_state.page = "details"
+                        st.experimental_rerun()
                     if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
                         st.session_state.favorites.remove(row["title"])
+                        st.experimental_rerun()
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
