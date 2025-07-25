@@ -79,6 +79,10 @@ st.sidebar.header("🧠 Select Your Emotion")
 emotion_options = ["Any"] + sorted(set(e for sublist in df["emotion_tags"] for e in sublist))
 selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
 
+# Sidebar Favorites Navigation
+if st.sidebar.button("⭐ View Favorites"):
+    st.session_state.page = "favorites"
+
 # ------------------------ Anime Details Page ------------------------
 if st.session_state.page == "details":
     anime = st.session_state.selected_anime
@@ -96,16 +100,47 @@ if st.session_state.page == "details":
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove Favorite", key="details_remove"):
             st.session_state.favorites.remove(anime["title"])
-            st.toast("Removed from favorites.")
+            st.success("Removed from favorites.")
     else:
         if st.button("❤️ Add to Favorites", key="details_add"):
             st.session_state.favorites.append(anime["title"])
-            st.toast("Added to favorites.")
+            st.success("Added to favorites.")
 
     if st.button("🔙 Back to Recommendations", key="back_btn"):
         st.session_state.page = "home"
 
-    st.markdown("</div>", unsafe_allow_html=True)
+# ------------------------ Favorites Page ------------------------
+elif st.session_state.page == "favorites":
+    st.subheader("⭐ Your Favorite Anime")
+    fav_df = df[df['title'].isin(st.session_state.favorites)]
+    if fav_df.empty:
+        st.write("No favorites selected yet.")
+    else:
+        fav_cols = st.columns(3)
+        for i, (_, row) in enumerate(fav_df.iterrows()):
+            with fav_cols[i % 3]:
+                with st.container():
+                    st.markdown(f"""
+                        <div class='anime-card'>
+                            <span class='anime-title'>{row['title']}</span><br>
+                            <strong>Genre:</strong> {', '.join(row['genres'])}<br>
+                    """, unsafe_allow_html=True)
+
+                    if pd.notna(row['image_url']):
+                        st.image(row['image_url'], use_container_width=True)
+
+                    if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
+                        st.session_state.selected_anime = row.to_dict()
+                        st.session_state.page = "details"
+
+                    if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
+                        st.session_state.favorites.remove(row["title"])
+                        st.success("Removed from favorites.")
+
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
 
 # ------------------------ Home Page ------------------------
 else:
@@ -137,47 +172,12 @@ else:
                     if row["title"] in st.session_state.favorites:
                         if st.button("❌ Remove Favorite", key=f"remove_{row['title']}_{i}"):
                             st.session_state.favorites.remove(row["title"])
-                            st.toast("Removed from favorites.")
+                            st.success("Removed from favorites.")
                     else:
                         if st.button("❤️ Add to Favorites", key=f"add_{row['title']}_{i}"):
                             st.session_state.favorites.append(row["title"])
-                            st.toast("Added to favorites.")
+                            st.success("Added to favorites.")
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.warning("No anime found for that emotion.")
-
-    # ------------------------ Favorites Section ------------------------
-    st.markdown("""
-        <h3 style='color:#f39c12;'>⭐ Your Favorite Anime</h3>
-        <div class='scrollbox'>
-    """, unsafe_allow_html=True)
-
-    if st.session_state.favorites:
-        fav_df = df[df['title'].isin(st.session_state.favorites)]
-        fav_cols = st.columns(3)
-        for i, (_, row) in enumerate(fav_df.iterrows()):
-            with fav_cols[i % 3]:
-                with st.container():
-                    st.markdown(f"""
-                        <div class='anime-card'>
-                            <span class='anime-title'>{row['title']}</span><br>
-                            <strong>Genre:</strong> {', '.join(row['genres'])}<br>
-                    """, unsafe_allow_html=True)
-
-                    if pd.notna(row['image_url']):
-                        st.image(row['image_url'], use_container_width=True)
-
-                    if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
-                        st.session_state.selected_anime = row.to_dict()
-                        st.session_state.page = "details"
-
-                    if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
-                        st.session_state.favorites.remove(row["title"])
-                        st.toast("Removed from favorites.")
-
-                    st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.write("No favorites selected yet.")
-
-    st.markdown("</div>", unsafe_allow_html=True)
