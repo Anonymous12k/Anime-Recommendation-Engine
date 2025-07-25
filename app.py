@@ -140,13 +140,21 @@ else:
     st.title("MoodFlix Anime Recommender")
     st.markdown("Find anime based on how you feel 🎭")
 
-    filtered_df = df if selected_emotion.lower() == "any" else df[df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
-    filtered_df = filtered_df.sample(n=min(9, len(filtered_df)))
+    if selected_emotion.lower() == "any":
+        filtered_df = df.sample(n=min(9, len(df)))
+    else:
+        filtered_df = df[df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
 
     if filtered_df.empty:
         st.warning("No anime found for this emotion.")
     else:
         st.subheader(f"🎬 Recommendations for '{selected_emotion}'")
+
+        # Temporary action tracker
+        if "action" not in st.session_state:
+            st.session_state.action = None
+            st.session_state.action_payload = None
+
         cols = st.columns(3)
         for i, (_, row) in enumerate(filtered_df.iterrows()):
             with cols[i % 3]:
@@ -161,23 +169,42 @@ else:
                     if pd.notna(row['image_url']):
                         st.image(row['image_url'], use_container_width=True)
 
-                    if st.button("📖 View Details", key=f"home_details_{row['title']}_{i}"):
-                        st.session_state.selected_anime = row.to_dict()
-                        st.session_state.page = "details"
-                        st.session_state.trigger_rerun = True
+                    # View Details
+                    if st.button("📖 View Details", key=f"view_{i}"):
+                        st.session_state.action = "details"
+                        st.session_state.action_payload = row.to_dict()
 
+                    # Add/Remove from Favorites
                     if row["title"] in st.session_state.favorites:
-                        if st.button("❌ Remove", key=f"home_remove_{row['title']}_{i}"):
-                            st.session_state.favorites.remove(row["title"])
-                            st.session_state.trigger_rerun = True
+                        if st.button("❌ Remove", key=f"remove_{i}"):
+                            st.session_state.action = "remove"
+                            st.session_state.action_payload = row["title"]
                     else:
-                        if st.button("❤ Add", key=f"home_add_{row['title']}_{i}"):
-                            st.session_state.favorites.append(row["title"])
-                            st.session_state.trigger_rerun = True
+                        if st.button("❤ Add", key=f"add_{i}"):
+                            st.session_state.action = "add"
+                            st.session_state.action_payload = row["title"]
 
                     st.markdown("</div>", unsafe_allow_html=True)
 
-# ---------------------- Trigger Rerun if Needed ----------------------
-if st.session_state.trigger_rerun:
-    st.session_state.trigger_rerun = False
-    st.experimental_rerun()
+        # Handle actions AFTER layout
+        if st.session_state.action:
+            action = st.session_state.action
+            payload = st.session_state.action_payload
+
+            if action == "details":
+                st.session_state.selected_anime = payload
+                st.session_state.page = "details"
+
+            elif action == "add":
+                if payload not in st.session_state.favorites:
+                    st.session_state.favorites.append(payload)
+
+            elif action == "remove":
+                if payload in st.session_state.favorites:
+                    st.session_state.favorites.remove(payload)
+
+            # Reset action to prevent infinite loop
+            st.session_state.action = None
+            st.session_state.action_payload = None
+
+            st.experimental_rerun()
