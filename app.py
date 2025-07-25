@@ -2,79 +2,96 @@ import streamlit as st
 import pandas as pd
 import ast
 
-# ✅ Load and cache data
+# ------------------------ Load & Parse Data ------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("anime_with_emotions.csv")
+    df = pd.read_csv("/mnt/data/anime_with_extended_emotions.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     df["emotion_tags"] = df["emotion_tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     return df
 
 df = load_data()
 
-# ✅ Unique options
+# ------------------------ UI Styling ------------------------
+st.set_page_config(page_title="Anime Recommender", layout="wide")
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #0e0e10;
+        color: white;
+    }
+    .stApp {
+        background-color: #111;
+        color: #eee;
+    }
+    h1, h2, h3, h4 {
+        color: #f92672;
+    }
+    .stButton>button {
+        background-color: #2c2f33;
+        color: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #f92672;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ------------------------ Title ------------------------
+st.title("🦇 Anime Emotion Recommender (Goth UI)")
+st.write("Find anime based on how you feel. Pick your emotion and explore!")
+
+# ------------------------ Sidebar Filters ------------------------
+st.sidebar.header("🔍 Filters")
+
+# 🎭 Emotion Filter
 all_emotions = sorted({e for tags in df["emotion_tags"] for e in tags})
-all_genres = sorted({g for genre in df["genres"] for g in genre})
-all_titles = df["title"].dropna().unique()
+selected_emotions = st.sidebar.multiselect("🎯 Choose Emotions", all_emotions)
 
-# 🎯 UI layout
-st.title("🎭 Anime Emotion Recommender")
+# 🎬 Genre Filter
+all_genres = sorted({genre for sublist in df["genres"] for genre in sublist})
+selected_genre = st.sidebar.selectbox("📚 Choose Genre (optional)", ["Any"] + all_genres)
 
-with st.sidebar:
-    st.header("🔍 Filter Options")
+# ⭐ Score Filter
+min_score = st.sidebar.slider("⭐ Minimum Score", min_value=0.0, max_value=10.0, value=7.0, step=0.1)
 
-    selected_emotions = st.multiselect("😊 Select Emotion(s)", all_emotions)
-    selected_genres = st.multiselect("🎬 Select Genre(s) (optional)", all_genres)
-    search_title = st.text_input("🔎 Search by Anime Name")
-    top_n = st.slider("📈 Number of Results", 1, 20, 5)
-    match_all = st.checkbox("✅ Match all selected emotions", value=False)
+# ------------------------ Recommend Button ------------------------
+if st.sidebar.button("🎬 Recommend"):
+    results = df.copy()
 
-# 📌 Filtering function
-def filter_anime(df, emotions, genres, name_query, match_all):
-    filtered = df.copy()
+    # Filter by emotion
+    if selected_emotions:
+        results = results[results["emotion_tags"].apply(lambda tags: any(em in tags for em in selected_emotions))]
 
-    if emotions:
-        if match_all:
-            filtered = filtered[filtered["emotion_tags"].apply(lambda tags: all(e in tags for e in emotions))]
-        else:
-            filtered = filtered[filtered["emotion_tags"].apply(lambda tags: any(e in tags for e in emotions))]
+    # Filter by genre
+    if selected_genre != "Any":
+        results = results[results["genres"].apply(lambda genres: selected_genre in genres)]
 
-    if genres:
-        filtered = filtered[filtered["genres"].apply(lambda g_list: any(g in g_list for g in genres))]
+    # Filter by score
+    results = results[results["score"] >= min_score]
 
-    if name_query:
-        filtered = filtered[filtered["title"].str.contains(name_query, case=False, na=False)]
+    # Sort and limit
+    results = results.sort_values(by="score", ascending=False).head(45)
 
-    return filtered.sort_values(by="score", ascending=False)
-
-# ✅ Show recommendations
-if st.button("🎬 Recommend Anime"):
-    filtered_df = filter_anime(df, selected_emotions, selected_genres, search_title, match_all)
-
-    if filtered_df.empty:
-        st.warning("No anime found for the selected filters.")
+    if results.empty:
+        st.warning("😢 No matching anime found.")
     else:
-        favorites = st.session_state.setdefault("favorites", [])
+        st.markdown("## 🎥 Recommendations")
 
-        for _, row in filtered_df.head(top_n).iterrows():
-            st.markdown(f"### {row['title']} (⭐ {row['score']})")
-            st.image(row.get("image_url", ""), width=250)
-            st.write(f"📌 **Genres**: {', '.join(row['genres'])}")
-            st.write(f"🎭 **Emotions**: {', '.join(row['emotion_tags'])}")
+        cols = st.columns(5)  # 5 anime per row
 
-            if st.button(f"❤️ Save to Favorites", key=row["title"]):
-                if row["title"] not in favorites:
-                    favorites.append(row["title"])
-                    st.success(f"'{row['title']}' added to favorites!")
+        for idx, (i, row) in enumerate(results.iterrows()):
+            with cols[idx % 5]:
+                st.image(row.get("image_url", ""), width=150)
+                st.markdown(f"**{row['title']}**")
+                st.write(f"⭐ {row['score']}")
+                st.write(f"🎭 {', '.join(row['emotion_tags'])}")
+                st.write(f"📚 {', '.join(row['genres'])}")
+                
+                # Unique button key using index
+                if st.button("❤️ Favorite", key=f"{row['title']}_{i}"):
+                    st.success(f"✅ Added '{row['title']}' to favorites!")
 
-            st.markdown("---")
-
-# ❤️ Show Favorites
-if st.sidebar.button("📁 Show Favorites"):
-    favorites = st.session_state.get("favorites", [])
-    st.sidebar.markdown("### ❤️ Your Favorite Anime")
-    if favorites:
-        for fav in favorites:
-            st.sidebar.markdown(f"- {fav}")
-    else:
-        st.sidebar.info("No favorites saved yet.")
+                st.markdown("---")
