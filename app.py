@@ -40,7 +40,7 @@ st.markdown(
 )
 
 # ------------------------ Title ------------------------
-st.title("(❁´◡`❁) Anime Emotion Recommender (Goth UI)")
+st.title("🎭Anime Emotion Recommender")
 st.write("Find anime based on how you feel. Pick your emotion and explore!")
 
 # ------------------------ Sidebar Filters ------------------------
