@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import ast
 import random
@@ -96,15 +96,14 @@ if st.session_state.page == "details":
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove Favorite", key="details_remove"):
             st.session_state.favorites.remove(anime["title"])
-            st.success("Removed from favorites.")
+            st.toast("Removed from favorites.")
     else:
         if st.button("❤️ Add to Favorites", key="details_add"):
             st.session_state.favorites.append(anime["title"])
-            st.success("Added to favorites.")
+            st.toast("Added to favorites.")
 
     if st.button("🔙 Back to Recommendations", key="back_btn"):
         st.session_state.page = "home"
-        st.stop()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -134,16 +133,15 @@ else:
                     if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.experimental_rerun()
 
                     if row["title"] in st.session_state.favorites:
                         if st.button("❌ Remove Favorite", key=f"remove_{row['title']}_{i}"):
                             st.session_state.favorites.remove(row["title"])
-                            st.success("Removed from favorites.")
+                            st.toast("Removed from favorites.")
                     else:
                         if st.button("❤️ Add to Favorites", key=f"add_{row['title']}_{i}"):
                             st.session_state.favorites.append(row["title"])
-                            st.success("Added to favorites.")
+                            st.toast("Added to favorites.")
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
@@ -173,11 +171,10 @@ else:
                     if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.experimental_rerun()
 
                     if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
                         st.session_state.favorites.remove(row["title"])
-                        st.success("Removed from favorites.")
+                        st.toast("Removed from favorites.")
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
