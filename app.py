@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import ast
 
-# ------------------------ Page Config ------------------------
 st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 
-# ------------------------ Load & Parse Data ------------------------
+
 @st.cache_data
 def load_data():
     df = pd.read_csv("anime_with_extended_emotions.csv")
@@ -62,6 +61,9 @@ st.markdown("""
             border-radius: 0.5rem;
             width: 100%;
             height: auto;
+        }
+        .clickable-img {
+            cursor: pointer;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -131,6 +133,8 @@ else:
                     """, unsafe_allow_html=True)
 
                     if 'image_url' in row and pd.notna(row['image_url']):
+                        if st.button(" ", key=f"img_click_{i}"):
+                            open_anime_details(row)
                         st.image(row['image_url'], use_column_width=True)
                     else:
                         st.markdown("<em>No image available</em>", unsafe_allow_html=True)
