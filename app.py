@@ -9,7 +9,7 @@ st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 # ---------------------- Load Data ----------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("anime_dataset.csv")  # Includes 'watch_url'
+    df = pd.read_csv("anime_dataset.csv")  # Includes 'watch_url' and 'trailer_url'
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     df["emotion_tags"] = df["emotion_tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     return df
@@ -21,8 +21,6 @@ default_states = {
     "favorites": [],
     "page": "home",
     "selected_anime": None,
-    "action": None,
-    "action_payload": None
 }
 for key, val in default_states.items():
     if key not in st.session_state:
@@ -55,6 +53,9 @@ st.markdown("""
             margin: auto;
             box-shadow: 0 0 15px #9b59b6;
         }
+        a button {
+            margin-right: 1rem;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -66,6 +67,7 @@ selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
 if st.session_state.page != "favorites":
     if st.sidebar.button("⭐ View Favorites"):
         st.session_state.page = "favorites"
+        st.experimental_rerun()
 
 # ---------------------- Details Page ----------------------
 if st.session_state.page == "details":
@@ -76,18 +78,16 @@ if st.session_state.page == "details":
     st.markdown(f"**Emotions:** {', '.join(anime['emotion_tags'])}")
     st.markdown(f"**Synopsis:** {anime.get('synopsis', 'No synopsis available.')}")
 
+    # Trailer & Watch buttons
+    buttons_html = ""
     if pd.notna(anime["trailer_url"]):
-    st.markdown(
-        f"<a href='{anime['trailer_url']}' target='_blank' style='margin-right:20px;'>🎞️ Watch Trailer</a>",
-        unsafe_allow_html=True
-    )
-
+        buttons_html += f"<a href='{anime['trailer_url']}' target='_blank'><button style='background-color:#8e44ad;color:white;padding:10px;border:none;border-radius:5px;'>🎞️ Watch Trailer</button></a>"
     if pd.notna(anime["watch_url"]):
-    st.markdown(
-        f"<a href='{anime['watch_url']}' target='_blank'>▶️ Watch Anime</a>",
-        unsafe_allow_html=True
-    )
+        buttons_html += f"<a href='{anime['watch_url']}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;'>▶️ Watch Anime</button></a>"
 
+    st.markdown(buttons_html, unsafe_allow_html=True)
+
+    # Favorites button
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
             st.session_state.favorites.remove(anime["title"])
@@ -118,7 +118,6 @@ elif st.session_state.page == "favorites":
                 st.markdown(f"<div class='anime-card'>", unsafe_allow_html=True)
                 st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
-
                 if pd.notna(row["image_url"]):
                     st.image(row["image_url"], use_container_width=True)
 
@@ -155,7 +154,6 @@ else:
                 st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
                 st.markdown(f"_Emotions:_ {', '.join(row['emotion_tags'])}")
-
                 if pd.notna(row["image_url"]):
                     st.image(row["image_url"], use_container_width=True)
 
