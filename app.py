@@ -1,11 +1,9 @@
-# anime_app.py (Main Page)
 import streamlit as st
 import pandas as pd
 import ast
 
 # ------------------------ Load & Parse Data ------------------------
 @st.cache_data
-
 def load_data():
     df = pd.read_csv("anime_with_extended_emotions.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
@@ -14,112 +12,141 @@ def load_data():
 
 df = load_data()
 
-# ------------------------ Session State ------------------------
+# ------------------------ Session State Init ------------------------
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
-
+if "selected_page" not in st.session_state:
+    st.session_state.selected_page = "home"
 if "selected_anime" not in st.session_state:
     st.session_state.selected_anime = None
 
-# ------------------------ Page Config ------------------------
-st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
+# ------------------------ Goth Style ------------------------
+st.markdown("""
+    <style>
+        body, .stApp {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Yu Gothic', 'Noto Sans JP', sans-serif;
+        }
+        .anime-card {
+            background: rgba(30, 30, 30, 0.7);
+            padding: 1.5em;
+            margin: 1em 0;
+            border-radius: 1em;
+            backdrop-filter: blur(4px);
+            border: 1px solid #2c2c2c;
+        }
+        .detail-box {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background-color: #1a1a1a;
+            padding: 1.5em;
+            border: 1px solid #444;
+            overflow-y: auto;
+            border-radius: 0.5em;
+        }
+        .block-container {
+            padding-top: 2rem;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# ------------------------ Emotion Emoji Mapping ------------------------
+# ------------------------ Emoji Mood Presets ------------------------
 emoji_emotions = {
-    "💔 Heartbroken": "heartbroken",
+    "😊 Happy": "happy",
+    "😢 Sad": "sad",
+    "😡 Angry": "angry",
+    "😱 Fearful": "fear",
+    "😌 Relaxed": "relaxed",
+    "🤩 Excited": "excited",
     "😤 Rage": "rage",
-    "😂 Joy": "joy",
-    "😭 Sad": "sad",
-    "😨 Fear": "fear",
-    "😐 Neutral": "neutral",
-    "😳 Surprise": "surprise",
-    "😍 Love": "love",
+    "💔 Heartbroken": "heartbroken",
+    "🥺 Emotional": "emotional",
     "😎 Cool": "cool"
 }
 
-# ------------------------ Filters ------------------------
-st.sidebar.header("🔍 Filters")
-selected_emojis = st.sidebar.multiselect("🎯 Select your emotion", list(emoji_emotions.keys()))
-selected_emotions = [emoji_emotions[e] for e in selected_emojis]
-
-all_genres = sorted({genre for sublist in df["genres"] for genre in sublist})
-selected_genre = st.sidebar.selectbox("📚 Choose Genre", ["Any"] + all_genres)
-
-search_query = st.sidebar.text_input("🔎 Search Anime by Name")
-
-# ------------------------ Recommend Button ------------------------
-if st.sidebar.button("🎬 Recommend"):
-    results = df.copy()
-
-    if selected_emotions:
-        results = results[results["emotion_tags"].apply(lambda tags: any(em in tags for em in selected_emotions))]
-
-    if selected_genre != "Any":
-        results = results[results["genres"].apply(lambda genres: selected_genre in genres)]
-
-    if search_query:
-        results = results[results['title'].str.contains(search_query, case=False)]
-
-    results = results.sort_values(by="score", ascending=False).head(45)
-
-    if results.empty:
-        st.warning("😢 No matching anime found.")
-    else:
-        st.markdown("## 🎥 Recommendations")
-        cols = st.columns(5)
-
-        for idx, (i, row) in enumerate(results.iterrows()):
-            with cols[idx % 5]:
-                st.image(row.get("image_url", ""), width=150)
-                if st.button(row['title'], key=f"title_btn_{row['title']}"):
-                    st.session_state.selected_anime = row['title']
-                    st.experimental_rerun()
-                st.write(f"⭐ {row['score']}")
+# ------------------------ Navigation ------------------------
+def go_home():
+    st.session_state.selected_page = "home"
+    st.session_state.selected_anime = None
 
 # ------------------------ Anime Detail Page ------------------------
-if st.session_state.selected_anime:
-    selected_row = df[df['title'] == st.session_state.selected_anime].iloc[0]
-
-    st.markdown("""
-    <div style='background: rgba(0,0,0,0.6); padding: 30px; border-radius: 8px;'>
-        <h2>{}</h2>
-        <p><strong>Genres:</strong> {}</p>
-        <p><strong>Emotion Tags:</strong> {}</p>
-        <div style="aspect-ratio: 4 / 3; border: 2px solid #ccc; padding: 10px; overflow-y: auto;">
-            <p><strong>Synopsis:</strong><br>{}</p>
+def anime_detail_page(anime_title):
+    anime = df[df['title'] == anime_title].iloc[0]
+    st.title(anime['title'])
+    with st.container():
+        st.markdown(f"""
+        <div class='detail-box'>
+            <strong>🎭 Genres:</strong> {', '.join(anime['genres'])}<br>
+            <strong>💫 Emotions:</strong> {', '.join(anime['emotion_tags'])}<br><br>
+            <strong>📖 Synopsis:</strong><br>
+            {anime['synopsis']}
         </div>
-    </div>
-    """.format(
-        selected_row['title'],
-        ', '.join(selected_row['genres']),
-        ', '.join(selected_row['emotion_tags']),
-        selected_row.get('synopsis', 'No synopsis available.')
-    ), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    if selected_row['title'] in st.session_state.favorites:
-        if st.button("💔 Remove from Favorites"):
-            st.session_state.favorites.remove(selected_row['title'])
-            st.success("Removed from favorites")
+    is_fav = anime['title'] in st.session_state.favorites
+    if is_fav:
+        if st.button("❎ Remove from Favorites"):
+            st.session_state.favorites.remove(anime['title'])
+            st.toast(f"❌ Removed '{anime['title']}' from favorites")
     else:
         if st.button("❤️ Add to Favorites"):
-            st.session_state.favorites.append(selected_row['title'])
-            st.success("Added to favorites")
+            st.session_state.favorites.append(anime['title'])
+            st.toast(f"✅ Added '{anime['title']}' to favorites")
 
-    if st.button("🔙 Back to Recommendations"):
-        st.session_state.selected_anime = None
-        st.experimental_rerun()
+    if st.button("🔙 Back"):
+        go_home()
 
-# ------------------------ Favorites ------------------------
-if st.sidebar.button("❤️ View Favorites"):
-    fav_df = df[df['title'].isin(st.session_state.favorites)]
-    st.markdown("## ⭐ Your Favorite Anime")
-    if fav_df.empty:
-        st.info("No favorites selected yet.")
-    else:
-        for i, row in fav_df.iterrows():
-            st.markdown(f"""
-            <div style='background: rgba(40, 40, 40, 0.8); padding: 10px; margin: 10px 0; border-radius: 8px;'>
-                <h4 style='margin-bottom: 5px;'>{row['title']}</h4>
-                <p>⭐ {row['score']}<br>🎭 {', '.join(row['emotion_tags'])}<br>📚 {', '.join(row['genres'])}</p>
-            </div>
-            """, unsafe_allow_html=True)
+# ------------------------ Home Page ------------------------
+def home_page():
+    st.title("MoodFlix Anime Recommender")
+    st.subheader("Find anime based on how you feel!")
+
+    # Mood selection
+    mood_label = st.sidebar.selectbox("🎭 Choose Your Mood", list(emoji_emotions.keys()))
+    selected_emotion = emoji_emotions[mood_label]
+
+    if st.button("🎬 Recommend"):
+        st.session_state.recommend_triggered = True
+
+    if st.session_state.get("recommend_triggered", False):
+        results = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)]
+
+        if results.empty:
+            st.warning("😢 No anime found for that emotion.")
+        else:
+            for i, (_, row) in enumerate(results.iterrows()):
+                with st.container():
+                    st.markdown(f"""
+                    <div class='anime-card'>
+                        <h3 style='cursor:pointer;'>{row['title']}</h3>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    if st.button(row['title'], key=f"title_btn_{row['title']}_{i}"):
+                        st.session_state.selected_anime = row['title']
+                        st.session_state.selected_page = "detail"
+
+                    is_fav = row['title'] in st.session_state.favorites
+                    fav_key = f"fav_btn_{i}"
+                    if is_fav:
+                        if st.button("❎ Remove Favorite", key=fav_key):
+                            st.session_state.favorites.remove(row['title'])
+                            st.toast(f"❌ Removed '{row['title']}' from favorites")
+                    else:
+                        if st.button("❤️ Add to Favorites", key=fav_key):
+                            st.session_state.favorites.append(row['title'])
+                            st.toast(f"✅ Added '{row['title']}' to favorites")
+
+# ------------------------ Router ------------------------
+if st.session_state.selected_page == "home":
+    home_page()
+elif st.session_state.selected_page == "detail":
+    anime_detail_page(st.session_state.selected_anime)
