@@ -73,28 +73,45 @@ if st.session_state.page != "favorites":
 if st.session_state.page == "details":
     anime = st.session_state.selected_anime
     st.markdown(f"<div class='detail-box'>", unsafe_allow_html=True)
-    st.markdown(f"### 🎬 {anime['title']}")
-    st.markdown(f"**Genres:** {', '.join(anime['genres'])}")
-    st.markdown(f"**Emotions:** {', '.join(anime['emotion_tags'])}")
-    st.markdown(f"**Synopsis:** {anime.get('synopsis', 'No synopsis available.')}")
+
+    # Ensure proper type and fallback
+    title = anime.get("title", "Unknown Title")
+    genres = anime.get("genres", [])
+    emotions = anime.get("emotion_tags", [])
+    synopsis = anime.get("synopsis", "No synopsis available.")
+    image_url = anime.get("image_url", "")
+
+    st.markdown(f"### 🎬 {title}")
+    st.markdown(f"**Genres:** {', '.join(genres)}")
+    st.markdown(f"**Emotions:** {', '.join(emotions)}")
+    st.markdown(f"**Synopsis:** {synopsis}")
+
+    # Show Poster if valid
+    if isinstance(image_url, str) and image_url.strip() != "":
+        st.image(image_url, width=300)
+    else:
+        st.warning("No poster available.")
 
     # Trailer & Watch buttons
     buttons_html = ""
-    if pd.notna(anime["trailer_url"]):
-        buttons_html += f"<a href='{anime['trailer_url']}' target='_blank'><button style='background-color:#8e44ad;color:white;padding:10px;border:none;border-radius:5px;'>🎞️ Watch Trailer</button></a>"
-    if pd.notna(anime["watch_url"]):
-        buttons_html += f"<a href='{anime['watch_url']}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;'>▶️ Watch Anime</button></a>"
+    trailer_url = anime.get("trailer_url", "")
+    watch_url = anime.get("watch_url", "")
+
+    if isinstance(trailer_url, str) and trailer_url.strip() != "":
+        buttons_html += f"<a href='{trailer_url}' target='_blank'><button style='background-color:#8e44ad;color:white;padding:10px;border:none;border-radius:5px;'>🎞️ Watch Trailer</button></a>"
+    if isinstance(watch_url, str) and watch_url.strip() != "":
+        buttons_html += f"<a href='{watch_url}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;'>▶️ Watch Anime</button></a>"
 
     st.markdown(buttons_html, unsafe_allow_html=True)
 
     # Favorites button
-    if anime["title"] in st.session_state.favorites:
+    if title in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
-            st.session_state.favorites.remove(anime["title"])
+            st.session_state.favorites.remove(title)
             st.experimental_rerun()
     else:
         if st.button("❤ Add to Favorites"):
-            st.session_state.favorites.append(anime["title"])
+            st.session_state.favorites.append(title)
             st.experimental_rerun()
 
     if st.button("🔙 Back to Home"):
@@ -118,7 +135,7 @@ elif st.session_state.page == "favorites":
                 st.markdown(f"<div class='anime-card'>", unsafe_allow_html=True)
                 st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
-                if pd.notna(row["image_url"]):
+                if isinstance(row["image_url"], str) and row["image_url"].strip() != "":
                     st.image(row["image_url"], use_container_width=True)
 
                 if st.button("📖 View Details", key=f"view_fav_{i}"):
@@ -154,7 +171,7 @@ else:
                 st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
                 st.markdown(f"_Emotions:_ {', '.join(row['emotion_tags'])}")
-                if pd.notna(row["image_url"]):
+                if isinstance(row["image_url"], str) and row["image_url"].strip() != "":
                     st.image(row["image_url"], use_container_width=True)
 
                 if st.button("📖 View Details", key=f"view_{i}"):
