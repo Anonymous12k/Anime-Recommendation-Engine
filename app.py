@@ -130,18 +130,19 @@ if st.sidebar.button("🎬 Recommend"):
                 st.write(f"🎭 {', '.join(row['emotion_tags'])}")
                 st.write(f"📚 {', '.join(row['genres'])}")
 
-                if row['title'] in st.session_state.favorites:
-                    if st.button("❌ Remove Favorite", key=f"unfav_{row['title']}_{i}"):
-                        st.session_state.favorites.remove(row['title'])
-                        st.success(f"❎ Removed '{row['title']}' from favorites")
-                else:
-                    if st.button("❤️ Favorite", key=f"fav_{row['title']}_{i}"):
-                        st.session_state.favorites.append(row['title'])
-                        st.success(f"✅ Added '{row['title']}' to favorites")
+                # Favorite toggle
+                is_fav = row['title'] in st.session_state.favorites
+                fav_toggle = st.checkbox("❤️ Favorite", value=is_fav, key=f"fav_toggle_{row['title']}_{i}")
+                if fav_toggle and not is_fav:
+                    st.session_state.favorites.append(row['title'])
+                    st.toast(f"✅ Added '{row['title']}' to favorites")
+                elif not fav_toggle and is_fav:
+                    st.session_state.favorites.remove(row['title'])
+                    st.toast(f"❎ Removed '{row['title']}' from favorites")
 
-                if st.button("🔍 View Details", key=f"details_{row['title']}_{i}"):
-                    st.markdown(f"### 📖 {row['title']}")
-                    st.write(f"**Synopsis**: {row.get('synopsis', 'No synopsis available.')}")
+                # View Details Expander
+                with st.expander("🔍 View Details"):
+                    st.markdown(f"**Synopsis:** {row.get('synopsis', 'No synopsis available.')}")
                     trailer_url = row.get("trailer_url", None)
                     if trailer_url:
                         st.video(trailer_url)
@@ -179,4 +180,3 @@ st.markdown("""
     Made with 🖤 by Kishore | 感情に響くアニメ体験
 </div>
 """, unsafe_allow_html=True)
-
