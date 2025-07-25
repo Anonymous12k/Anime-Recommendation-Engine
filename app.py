@@ -61,7 +61,7 @@ st.markdown(
 )
 
 # ------------------------ Title ------------------------
-st.title("🌸 Anime Emotion Recommender")
+st.title("MoodFlix Anime recommender")
 st.write("Find anime based on how you feel!")
 
 # ------------------------ Sidebar Filters ------------------------
