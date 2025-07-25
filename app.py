@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import ast
 
+# ------------------------ Page Config ------------------------
 st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 
-
+# ------------------------ Load & Parse Data ------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("anime_with_extended_emotions.csv")
