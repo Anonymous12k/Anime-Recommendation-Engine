@@ -16,7 +16,7 @@ df = load_data()
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-# ------------------------ UI Styling (Japanese Anime Theme) ------------------------
+# ------------------------ UI Styling (Night Sky Theme) ------------------------
 st.set_page_config(page_title="Anime Recommender", layout="wide")
 st.markdown(
     """
@@ -24,7 +24,7 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap');
 
     html, body, .stApp {
-        background-image: url('https://images.unsplash.com/photo-1578449998485-67590b76bf63?auto=format&fit=crop&w=1350&q=80');
+        background-image: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-attachment: fixed;
         background-repeat: no-repeat;
@@ -124,7 +124,7 @@ if st.sidebar.button("🎬 Recommend"):
                     if watch_url:
                         st.markdown(f"[▶️ Watch Now]({watch_url})")
                     else:
-                        st.markdown(f"[🔗 Find Streaming]https://anilist.co/search/anime?search={row['title'].replace(' ', '%20')})")
+                        st.markdown(f"[🔗 Find Streaming](https://anilist.co/search/anime?search={row['title'].replace(' ', '%20')})")
 
                 st.markdown("---")
 
