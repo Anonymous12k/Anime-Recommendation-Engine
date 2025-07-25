@@ -21,26 +21,29 @@ data = load_data()
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-if "view_detail" not in st.session_state:
-    st.session_state.view_detail = None
+if "selected_anime" not in st.session_state:
+    st.session_state.selected_anime = None
+
+# ------------------------ Show Anime Details ------------------------
+def show_detail(anime):
+    st.markdown("---")
+    st.subheader(f"📘 {anime['title']}")
+    st.image(anime["image_url"], width=300)
+    st.write(f"**Genre:** {', '.join(anime['genres'])}")
+    st.write(f"**Score:** {anime['score']}")
+    st.write(f"**Synopsis:** {anime['synopsis']}")
+    
+    trailer_url = anime.get("trailer_url")
+    if trailer_url:
+        st.markdown(f"[🎬 Watch Trailer]({trailer_url})", unsafe_allow_html=True)
+
+    # Watch Now on YouTube via Muse Asia or search query
+    search_query = f"https://www.youtube.com/results?search_query={anime['title'].replace(' ', '+')}+Muse+Asia"
+    st.markdown(f"[▶️ Watch Now on YouTube]({search_query})", unsafe_allow_html=True)
+    st.markdown("---")
 
 # ------------------------ Sidebar Navigation ------------------------
 page = st.sidebar.radio("Navigate", ["Home", "Favorites"])
-
-# ------------------------ View Detail Modal ------------------------
-def show_detail(anime):
-    with st.container():
-        st.markdown("---")
-        st.subheader(f"📘 {anime['title']}")
-        st.image(anime["image_url"], width=300)
-        st.write(f"**Genre:** {', '.join(anime['genres'])}")
-        st.write(f"**Score:** {anime['score']}")
-        st.write(f"**Synopsis:** {anime['synopsis']}")
-
-        # Watch Now Button (Muse Asia YouTube redirect)
-        search_query = f"https://www.youtube.com/results?search_query={anime['title'].replace(' ', '+')}+Muse+Asia"
-        st.markdown(f"[▶️ Watch Now on YouTube]({search_query})", unsafe_allow_html=True)
-        st.markdown("---")
 
 # ------------------------ Home Page ------------------------
 if page == "Home":
@@ -62,20 +65,18 @@ if page == "Home":
                 st.markdown(f"**Genre:** {', '.join(row['genres'][:2])}")
                 st.markdown(f"**Score:** {row['score']}")
 
-                col1, col2 = st.columns([1, 1])
+                col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("❤️ Favorite", key=f"fav_{row['title']}"):
-                        if row['title'] not in [a['title'] for a in st.session_state.favorites]:
-                            st.session_state.favorites.append(row)
+                    if st.button("❤️ Favorite", key=f"fav_{i}"):
+                        if all(row["title"] != fav["title"] for fav in st.session_state.favorites):
+                            st.session_state.favorites.append(row.to_dict())
 
                 with col2:
-                    if st.button("ℹ️ View Details", key=f"view_{row['title']}"):
-                        st.session_state.view_detail = row
-                        st.experimental_rerun()
+                    if st.button("ℹ️ View Details", key=f"view_{i}"):
+                        st.session_state.selected_anime = row.to_dict()
 
-        if st.session_state.view_detail:
-            show_detail(st.session_state.view_detail)
-            st.session_state.view_detail = None
+    if st.session_state.selected_anime:
+        show_detail(st.session_state.selected_anime)
 
 # ------------------------ Favorites Page ------------------------
 elif page == "Favorites":
@@ -85,20 +86,21 @@ elif page == "Favorites":
         st.info("You haven't added any favorites yet.")
     else:
         fav_cols = st.columns(3)
-        for i, row in enumerate(st.session_state.favorites):
+        for i, fav in enumerate(st.session_state.favorites):
             with fav_cols[i % 3]:
-                st.image(row["image_url"], use_container_width=True)
-                st.markdown(f"### {row['title']}")
-                st.markdown(f"**Genre:** {', '.join(row['genres'][:2])}")
-                st.markdown(f"**Score:** {row['score']}")
+                st.image(fav["image_url"], use_container_width=True)
+                st.markdown(f"### {fav['title']}")
+                st.markdown(f"**Genre:** {', '.join(fav['genres'][:2])}")
+                st.markdown(f"**Score:** {fav['score']}")
 
-                search_query = f"https://www.youtube.com/results?search_query={row['title'].replace(' ', '+')}+Muse+Asia"
-                st.markdown(f"[▶️ Watch Now on YouTube]({search_query})", unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    search_query = f"https://www.youtube.com/results?search_query={fav['title'].replace(' ', '+')}+Muse+Asia"
+                    st.markdown(f"[▶️ Watch Now]({search_query})", unsafe_allow_html=True)
 
-                if st.button("ℹ️ View Details", key=f"view_fav_{row['title']}"):
-                    st.session_state.view_detail = row
-                    st.experimental_rerun()
+                with col2:
+                    if st.button("ℹ️ View Details", key=f"fav_detail_{i}"):
+                        st.session_state.selected_anime = fav
 
-        if st.session_state.view_detail:
-            show_detail(st.session_state.view_detail)
-            st.session_state.view_detail = None
+    if st.session_state.selected_anime:
+        show_detail(st.session_state.selected_anime)
