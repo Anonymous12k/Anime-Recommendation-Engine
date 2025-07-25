@@ -4,7 +4,6 @@ import ast
 
 # ------------------------ Load & Parse Data ------------------------
 @st.cache_data
-
 def load_data():
     df = pd.read_csv("anime_with_extended_emotions.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
@@ -17,50 +16,67 @@ df = load_data()
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-# ------------------------ UI Styling (Night Sky Theme with Overlay) ------------------------
-st.set_page_config(page_title="Anime Recommender", layout="wide")
+# ------------------------ Page Configuration ------------------------
+st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
+
+# ------------------------ Gothic + Japanese Theme Styling ------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&family=Cinzel:wght@500&display=swap');
 
     html, body, .stApp {
-        background-image: url('https://i.ibb.co/M9PSfhD/japan-night.jpg');
+        background-image: url('https://images.unsplash.com/photo-1600051857820-d3f93e4f3bd4?auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-attachment: fixed;
         background-repeat: no-repeat;
-        color: #f5f5f5;
         font-family: 'Noto Sans JP', sans-serif;
-        animation: fadeIn 1s ease-in;
+        color: #e0e0e0;
+        text-shadow: 1px 1px 2px #000;
     }
 
     .main-block {
-        background: rgba(0, 0, 0, 0.6);
-        padding: 20px;
-        border-radius: 10px;
-        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.7);
+        padding: 30px;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        animation: fadeIn 1.2s ease-in-out;
     }
 
     h1, h2, h3, h4 {
-        color: #f67280;
+        font-family: 'Cinzel', serif;
+        color: #dcd6f7;
+        text-shadow: 2px 2px 4px #000;
     }
 
     .stButton>button {
-        background-color: #355c7d;
-        color: #ffffff;
-        border-radius: 8px;
+        background-color: #2e1a47;
+        color: #fff;
         border: none;
-        padding: 8px 16px;
+        border-radius: 6px;
+        padding: 10px 20px;
         font-weight: bold;
-        transition: background-color 0.3s ease;
+        transition: all 0.3s ease;
     }
 
     .stButton>button:hover {
         background-color: #6c5b7b;
+        transform: scale(1.05);
+    }
+
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #6c5b7b;
+        border-radius: 10px;
     }
 
     @keyframes fadeIn {
-        from {opacity: 0; transform: translateY(10px);}
+        from {opacity: 0; transform: translateY(20px);}
         to {opacity: 1; transform: translateY(0);}
     }
     </style>
@@ -68,10 +84,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ------------------------ Title ------------------------
-st.markdown("<div class='main-block'>", unsafe_allow_html=True)
-st.title("MoodFlix Anime Recommender")
-st.write("Find anime based on how you feel!")
+# ------------------------ Title Block ------------------------
+st.markdown("<div class='main-block' style='text-align: center;'>", unsafe_allow_html=True)
+st.markdown("<h1>🖤 MoodFlix</h1>", unsafe_allow_html=True)
+st.markdown("<h3>感情に合わせてアニメを探す - Discover anime based on your emotions</h3>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ------------------------ Sidebar Filters ------------------------
 st.sidebar.header("🔍 Filters")
@@ -84,7 +101,7 @@ selected_genre = st.sidebar.selectbox("📚 Choose Genre", ["Any"] + all_genres)
 
 search_query = st.sidebar.text_input("🔎 Search Anime by Name")
 
-# ------------------------ Recommendation Logic ------------------------
+# ------------------------ Recommendations ------------------------
 if st.sidebar.button("🎬 Recommend"):
     results = df.copy()
 
@@ -108,7 +125,7 @@ if st.sidebar.button("🎬 Recommend"):
         for idx, (i, row) in enumerate(results.iterrows()):
             with cols[idx % 5]:
                 st.image(row.get("image_url", ""), width=150)
-                st.markdown(f"**{row['title']}**")
+                st.markdown(f"<h4>{row['title']}</h4>", unsafe_allow_html=True)
                 st.write(f"⭐ {row['score']}")
                 st.write(f"🎭 {', '.join(row['emotion_tags'])}")
                 st.write(f"📚 {', '.join(row['genres'])}")
@@ -117,12 +134,10 @@ if st.sidebar.button("🎬 Recommend"):
                     if st.button("❌ Remove Favorite", key=f"unfav_{row['title']}_{i}"):
                         st.session_state.favorites.remove(row['title'])
                         st.success(f"❎ Removed '{row['title']}' from favorites")
-                        st.rerun()
                 else:
                     if st.button("❤️ Favorite", key=f"fav_{row['title']}_{i}"):
                         st.session_state.favorites.append(row['title'])
                         st.success(f"✅ Added '{row['title']}' to favorites")
-                        st.rerun()
 
                 if st.button("🔍 View Details", key=f"details_{row['title']}_{i}"):
                     st.markdown(f"### 📖 {row['title']}")
@@ -150,6 +165,18 @@ if st.sidebar.button("❤️ View Favorites"):
         st.info("No favorites selected yet.")
     else:
         for i, row in fav_df.iterrows():
-            st.markdown(f"**{row['title']}** - ⭐ {row['score']} - 🎭 {', '.join(row['emotion_tags'])}")
+            st.markdown(f"""
+            <div style='background: rgba(40, 40, 40, 0.8); padding: 10px; margin: 10px 0; border-radius: 8px;'>
+                <h4 style='margin-bottom: 5px;'>{row['title']}</h4>
+                <p>⭐ {row['score']}<br>🎭 {', '.join(row['emotion_tags'])}<br>📚 {', '.join(row['genres'])}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+# ------------------------ Footer ------------------------
+st.markdown("""
+<hr style="border-top: 1px solid #999;">
+<div style='text-align: center; font-size: 14px; opacity: 0.7;'>
+    Made with 🖤 by Kishore | 感情に響くアニメ体験
+</div>
+""", unsafe_allow_html=True)
+
