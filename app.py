@@ -82,7 +82,7 @@ if st.session_state.page == "details":
         unsafe_allow_html=True
     )
 
-if pd.notna(anime["watch_url"]):
+    if pd.notna(anime["watch_url"]):
     st.markdown(
         f"<a href='{anime['watch_url']}' target='_blank'>▶️ Watch Anime</a>",
         unsafe_allow_html=True
