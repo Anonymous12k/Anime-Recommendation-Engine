@@ -68,7 +68,7 @@ st.write("Find anime based on how you feel!")
 st.sidebar.header("🔍 Filters")
 
 all_emotions = sorted({e for tags in df["emotion_tags"] for e in tags})
-selected_emotions = st.sidebar.multiselect("🎯 Choose Emotions", all_emotions)
+selected_emotions = st.sidebar.multiselect("🎯 Select how you feel today", all_emotions)
 
 all_genres = sorted({genre for sublist in df["genres"] for genre in sublist})
 selected_genre = st.sidebar.selectbox("📚 Choose Genre", ["Any"] + all_genres)
