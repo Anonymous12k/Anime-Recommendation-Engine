@@ -88,8 +88,6 @@ if st.session_state.page == "details":
         unsafe_allow_html=True
     )
 
-
-
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
             st.session_state.favorites.remove(anime["title"])
