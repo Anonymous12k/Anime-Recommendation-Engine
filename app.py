@@ -4,6 +4,7 @@ import ast
 
 # ------------------------ Load & Parse Data ------------------------
 @st.cache_data
+
 def load_data():
     df = pd.read_csv("anime_with_extended_emotions.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
@@ -24,7 +25,7 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap');
 
     html, body, .stApp {
-        background-image: url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?auto=format&fit=crop&w=1350&q=80');
+        background-image: url('https://i.ibb.co/M9PSfhD/japan-night.jpg');
         background-size: cover;
         background-attachment: fixed;
         background-repeat: no-repeat;
@@ -116,10 +117,12 @@ if st.sidebar.button("🎬 Recommend"):
                     if st.button("❌ Remove Favorite", key=f"unfav_{row['title']}_{i}"):
                         st.session_state.favorites.remove(row['title'])
                         st.success(f"❎ Removed '{row['title']}' from favorites")
+                        st.rerun()
                 else:
                     if st.button("❤️ Favorite", key=f"fav_{row['title']}_{i}"):
                         st.session_state.favorites.append(row['title'])
                         st.success(f"✅ Added '{row['title']}' to favorites")
+                        st.rerun()
 
                 if st.button("🔍 View Details", key=f"details_{row['title']}_{i}"):
                     st.markdown(f"### 📖 {row['title']}")
