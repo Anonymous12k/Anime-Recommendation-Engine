@@ -24,7 +24,7 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap');
 
     html, body, .stApp {
-        background-image: url('https://images.unsplash.com/photo-1586265069350-5b0e2f0a90a4?auto=format&fit=crop&w=1350&q=80');
+        background-image: url('https://images.unsplash.com/photo-1578449998485-67590b76bf63?auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-attachment: fixed;
         background-repeat: no-repeat;
