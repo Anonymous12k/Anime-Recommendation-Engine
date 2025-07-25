@@ -87,7 +87,7 @@ if st.session_state.page == "details":
             <h2 class='anime-title'>{anime["title"]}</h2>
             <p><strong>Genre:</strong> {", ".join(anime["genres"])}</p>
             <p><strong>Emotions:</strong> {", ".join(anime["emotion_tags"])}</p>
-            <p><strong>Synopsis:</strong> {anime["synopsis"]}</p>
+            <p><strong>Synopsis:</strong> {anime.get("synopsis", "No synopsis available.")}</p>
     """, unsafe_allow_html=True)
 
     if 'trailer_url' in anime and pd.notna(anime['trailer_url']):
@@ -110,7 +110,7 @@ if st.session_state.page == "details":
 
 # ------------------------ Home Page ------------------------
 else:
-    if selected_emotion == "any":
+    if selected_emotion.lower() == "any":
         filtered_df = df.sample(n=9)
     else:
         filtered_df = df[df["emotion_tags"].apply(lambda x: selected_emotion in x)]
@@ -134,7 +134,7 @@ else:
                     if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.stop()
+                        st.experimental_rerun()
 
                     if row["title"] in st.session_state.favorites:
                         if st.button("❌ Remove Favorite", key=f"remove_{row['title']}_{i}"):
@@ -147,7 +147,7 @@ else:
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.warning("😢 No anime found for that emotion.")
+        st.warning("No anime found for that emotion.")
 
     # ------------------------ Favorites Section ------------------------
     st.markdown("""
@@ -173,7 +173,7 @@ else:
                     if st.button("📖 View Details", key=f"fav_details_{row['title']}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.stop()
+                        st.experimental_rerun()
 
                     if st.button("❌ Remove Favorite", key=f"fav_remove_{row['title']}"):
                         st.session_state.favorites.remove(row["title"])
@@ -182,4 +182,5 @@ else:
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.write("No favorites selected yet.")
+
     st.markdown("</div>", unsafe_allow_html=True)
