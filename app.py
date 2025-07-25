@@ -76,8 +76,20 @@ if st.session_state.page == "details":
     st.markdown(f"**Emotions:** {', '.join(anime['emotion_tags'])}")
     st.markdown(f"**Synopsis:** {anime.get('synopsis', 'No synopsis available.')}")
 
-    if pd.notna(anime.get("watch_url", None)) and "youtube.com" in anime["watch_url"]:
-        st.markdown(f"[▶️ Watch Trailer]({anime['watch_url']})", unsafe_allow_html=True)
+    # Trailer Button
+if pd.notna(anime.get("trailer_url", None)):
+    st.markdown(
+        f"<a href='{anime['trailer_url']}' target='_blank' style='margin-right:20px;'>🎞️ Watch Trailer</a>",
+        unsafe_allow_html=True
+    )
+
+# Watch Anime Button
+if pd.notna(anime.get("watch_url", None)):
+    st.markdown(
+        f"<a href='{anime['watch_url']}' target='_blank'>▶️ Watch Anime</a>",
+        unsafe_allow_html=True
+    )
+
 
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
