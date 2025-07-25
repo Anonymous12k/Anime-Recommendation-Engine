@@ -16,39 +16,39 @@ df = load_data()
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-# ------------------------ Page Config & Styling ------------------------
+# ------------------------ UI Styling (Japanese Anime Theme) ------------------------
 st.set_page_config(page_title="Anime Recommender", layout="wide")
-
-st.markdown("""
+st.markdown(
+    """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&display=swap');
 
     html, body, .stApp {
-        background-image: url('https://i.imgur.com/4NJlNeE.jpg');
+        background-image: url('https://images.unsplash.com/photo-1586265069350-5b0e2f0a90a4?auto=format&fit=crop&w=1350&q=80');
         background-size: cover;
         background-attachment: fixed;
-        background-position: center;
-        font-family: 'Noto Sans JP', sans-serif;
+        background-repeat: no-repeat;
         color: #f5f5f5;
-        animation: fadeIn 1s ease-in-out;
+        font-family: 'Noto Sans JP', sans-serif;
+        animation: fadeIn 1s ease-in;
     }
 
-    h1, h2, h3 {
-        color: #ffc9e3;
+    h1, h2, h3, h4 {
+        color: #f67280;
     }
 
-    .stButton > button {
-        background-color: #663399;
-        color: white;
-        border-radius: 10px;
-        padding: 0.4rem 1rem;
-        font-weight: bold;
+    .stButton>button {
+        background-color: #355c7d;
+        color: #ffffff;
+        border-radius: 8px;
         border: none;
-        transition: 0.3s;
+        padding: 8px 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
     }
 
-    .stButton > button:hover {
-        background-color: #ff69b4;
+    .stButton>button:hover {
+        background-color: #6c5b7b;
     }
 
     @keyframes fadeIn {
@@ -56,11 +56,13 @@ st.markdown("""
         to {opacity: 1;}
     }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 # ------------------------ Title ------------------------
 st.title("🌸 Anime Emotion Recommender")
-st.write("Find anime based on your emotions — powered by a Japanese-themed vibe!")
+st.write("Find anime based on how you feel!")
 
 # ------------------------ Sidebar Filters ------------------------
 st.sidebar.header("🔍 Filters")
@@ -71,7 +73,7 @@ selected_emotions = st.sidebar.multiselect("🎯 Choose Emotions", all_emotions)
 all_genres = sorted({genre for sublist in df["genres"] for genre in sublist})
 selected_genre = st.sidebar.selectbox("📚 Choose Genre", ["Any"] + all_genres)
 
-min_score = st.sidebar.slider("⭐ Minimum Score", 0.0, 10.0, 7.0, 0.1)
+min_score = st.sidebar.slider("⭐ Minimum Score", min_value=0.0, max_value=10.0, value=7.0, step=0.1)
 
 # ------------------------ Recommendation Logic ------------------------
 if st.sidebar.button("🎬 Recommend"):
@@ -103,27 +105,26 @@ if st.sidebar.button("🎬 Recommend"):
                 if row['title'] in st.session_state.favorites:
                     if st.button("❌ Remove Favorite", key=f"unfav_{row['title']}_{i}"):
                         st.session_state.favorites.remove(row['title'])
-                        st.success(f"❎ Removed '{row['title']}' from favorites.")
+                        st.success(f"❎ Removed '{row['title']}' from favorites")
                 else:
                     if st.button("❤️ Favorite", key=f"fav_{row['title']}_{i}"):
                         st.session_state.favorites.append(row['title'])
-                        st.success(f"✅ Added '{row['title']}' to favorites.")
+                        st.success(f"✅ Added '{row['title']}' to favorites")
 
                 if st.button("🔍 View Details", key=f"details_{row['title']}_{i}"):
                     st.markdown(f"### 📖 {row['title']}")
-                    st.write(f"**Synopsis:** {row.get('synopsis', 'No synopsis available.')}")
-                    
+                    st.write(f"**Synopsis**: {row.get('synopsis', 'No synopsis available.')}")
                     trailer_url = row.get("trailer_url", None)
                     if trailer_url:
                         st.video(trailer_url)
                     else:
                         st.write("🎞️ Trailer not available.")
-                    
+
                     watch_url = row.get("watch_url", None)
                     if watch_url:
                         st.markdown(f"[▶️ Watch Now]({watch_url})")
                     else:
-                        st.markdown(f"[🔗 Find on Anilist](https://anilist.co/search/anime?search={row['title'].replace(' ', '%20')})")
+                        st.markdown(f"[🔗 Find Streaming]https://anilist.co/search/anime?search={row['title'].replace(' ', '%20')})")
 
                 st.markdown("---")
 
@@ -133,7 +134,7 @@ if st.sidebar.button("❤️ View Favorites"):
     fav_df = df[df['title'].isin(st.session_state.favorites)]
 
     if fav_df.empty:
-        st.info("You haven't added any favorites yet.")
+        st.info("No favorites selected yet.")
     else:
         for i, row in fav_df.iterrows():
             st.markdown(f"**{row['title']}** - ⭐ {row['score']} - 🎭 {', '.join(row['emotion_tags'])}")
