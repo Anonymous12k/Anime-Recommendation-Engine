@@ -76,7 +76,7 @@ st.markdown("Find anime based on how you feel! 🖤")
 
 # ------------------------ Sidebar ------------------------
 st.sidebar.header("🧠 Select Your Emotion")
-emotion_options = [" "] + sorted(set(e for sublist in df["emotion_tags"] for e in sublist))
+emotion_options = ["Any"] + sorted(set(e for sublist in df["emotion_tags"] for e in sublist))
 selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
 
 # ------------------------ Anime Details Page ------------------------
