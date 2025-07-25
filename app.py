@@ -16,7 +16,7 @@ df = load_data()
 if "favorites" not in st.session_state:
     st.session_state.favorites = []
 
-# ------------------------ UI Styling (Night Sky Theme) ------------------------
+# ------------------------ UI Styling (Night Sky Theme with Overlay) ------------------------
 st.set_page_config(page_title="Anime Recommender", layout="wide")
 st.markdown(
     """
@@ -31,6 +31,13 @@ st.markdown(
         color: #f5f5f5;
         font-family: 'Noto Sans JP', sans-serif;
         animation: fadeIn 1s ease-in;
+    }
+
+    .main-block {
+        background: rgba(0, 0, 0, 0.6);
+        padding: 20px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
     }
 
     h1, h2, h3, h4 {
@@ -52,8 +59,8 @@ st.markdown(
     }
 
     @keyframes fadeIn {
-        from {opacity: 0;}
-        to {opacity: 1;}
+        from {opacity: 0; transform: translateY(10px);}
+        to {opacity: 1; transform: translateY(0);}
     }
     </style>
     """,
@@ -61,7 +68,8 @@ st.markdown(
 )
 
 # ------------------------ Title ------------------------
-st.title("MoodFlix Anime recommender")
+st.markdown("<div class='main-block'>", unsafe_allow_html=True)
+st.title("MoodFlix Anime Recommender")
 st.write("Find anime based on how you feel!")
 
 # ------------------------ Sidebar Filters ------------------------
@@ -73,7 +81,7 @@ selected_emotions = st.sidebar.multiselect("🎯 Select how you feel today", all
 all_genres = sorted({genre for sublist in df["genres"] for genre in sublist})
 selected_genre = st.sidebar.selectbox("📚 Choose Genre", ["Any"] + all_genres)
 
-min_score = st.sidebar.slider("⭐ Minimum Score", min_value=0.0, max_value=10.0, value=7.0, step=0.1)
+search_query = st.sidebar.text_input("🔎 Search Anime by Name")
 
 # ------------------------ Recommendation Logic ------------------------
 if st.sidebar.button("🎬 Recommend"):
@@ -85,7 +93,9 @@ if st.sidebar.button("🎬 Recommend"):
     if selected_genre != "Any":
         results = results[results["genres"].apply(lambda genres: selected_genre in genres)]
 
-    results = results[results["score"] >= min_score]
+    if search_query:
+        results = results[results['title'].str.contains(search_query, case=False)]
+
     results = results.sort_values(by="score", ascending=False).head(45)
 
     if results.empty:
@@ -138,3 +148,5 @@ if st.sidebar.button("❤️ View Favorites"):
     else:
         for i, row in fav_df.iterrows():
             st.markdown(f"**{row['title']}** - ⭐ {row['score']} - 🎭 {', '.join(row['emotion_tags'])}")
+
+st.markdown("</div>", unsafe_allow_html=True)
