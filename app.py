@@ -6,6 +6,13 @@ import random
 # ---------------------- Config ----------------------
 st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 
+# ---------------------- Safe Rerun ----------------------
+def safe_rerun():
+    try:
+        st.experimental_rerun()
+    except RuntimeError:
+        pass  # Prevent rerun error from double click
+
 # ---------------------- Load Data ----------------------
 @st.cache_data
 def load_data():
@@ -93,13 +100,16 @@ if st.session_state.page == "details":
     if anime["title"] in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
             st.session_state.favorites.remove(anime["title"])
+            safe_rerun()
     else:
         if st.button("❤️ Add to Favorites"):
-            st.session_state.favorites.append(anime["title"])
+            if anime["title"] not in st.session_state.favorites:
+                st.session_state.favorites.append(anime["title"])
+            safe_rerun()
 
     if st.button("🔙 Back to Home"):
         st.session_state.page = "home"
-        st.experimental_rerun()
+        safe_rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -108,7 +118,7 @@ elif st.session_state.page == "favorites":
     st.subheader("⭐ Your Favorite Anime")
     if st.button("🔙 Back to Home"):
         st.session_state.page = "home"
-        st.experimental_rerun()
+        safe_rerun()
 
     if st.session_state.favorites:
         fav_df = df[df["title"].isin(st.session_state.favorites)]
@@ -128,11 +138,12 @@ elif st.session_state.page == "favorites":
                     if st.button("📖 View Details", key=f"fav_view_{i}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.experimental_rerun()
+                        safe_rerun()
 
                     if st.button("❌ Remove", key=f"fav_remove_{i}"):
-                        st.session_state.favorites.remove(row["title"])
-                        st.experimental_rerun()
+                        if row["title"] in st.session_state.favorites:
+                            st.session_state.favorites.remove(row["title"])
+                            safe_rerun()
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
@@ -143,7 +154,7 @@ else:
     st.title("MoodFlix Anime Recommender")
     st.markdown("Find anime based on how you feel 🎭")
 
-    if selected_emotion.lower() == "any":
+    if selected_emotion.lower() == "any" or selected_emotion == "":
         filtered_df = df.sample(n=min(9, len(df)))
     else:
         filtered_df = df[df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
@@ -169,15 +180,16 @@ else:
                     if st.button("📖 View Details", key=f"home_details_{i}"):
                         st.session_state.selected_anime = row.to_dict()
                         st.session_state.page = "details"
-                        st.experimental_rerun()
+                        safe_rerun()
 
                     if row["title"] in st.session_state.favorites:
                         if st.button("❌ Remove", key=f"home_remove_{i}"):
                             st.session_state.favorites.remove(row["title"])
-                            st.experimental_rerun()
+                            safe_rerun()
                     else:
                         if st.button("❤️ Add", key=f"home_add_{i}"):
-                            st.session_state.favorites.append(row["title"])
-                            st.experimental_rerun()
+                            if row["title"] not in st.session_state.favorites:
+                                st.session_state.favorites.append(row["title"])
+                            safe_rerun()
 
                     st.markdown("</div>", unsafe_allow_html=True)
