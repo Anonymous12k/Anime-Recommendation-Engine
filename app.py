@@ -21,7 +21,6 @@ st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 
 # ------------------------ Gothic + Japanese Theme Styling ------------------------
 st.markdown(
-    """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&family=Cinzel:wght@500&display=swap');
 
