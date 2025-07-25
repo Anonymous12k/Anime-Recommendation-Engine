@@ -134,9 +134,9 @@ else:
                     """, unsafe_allow_html=True)
 
                     if 'image_url' in row and pd.notna(row['image_url']):
-                        if st.button(" ", key=f"img_click_{i}"):
+                        st.image(row['image_url'], use_container_width=True)
+                        if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
                             open_anime_details(row)
-                        st.image(row['image_url'], use_column_width=True)
                     else:
                         st.markdown("<em>No image available</em>", unsafe_allow_html=True)
 
@@ -146,9 +146,6 @@ else:
                     else:
                         if st.button("❤️ Add to Favorites", key=f"add_{row['title']}_{i}"):
                             st.session_state.favorites.append(row["title"])
-
-                    if st.button("📖 View Details", key=f"details_{row['title']}_{i}"):
-                        open_anime_details(row)
 
                     st.markdown("</div>", unsafe_allow_html=True)
     else:
