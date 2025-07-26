@@ -9,7 +9,7 @@ st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 # ---------------------- Load Data ----------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("anime_dataset_with_mal_links.csv")  # CSV includes watch_url with MAL links
+    df = pd.read_csv("anime_dataset.csv")  # CSV includes watch_url with MAL links
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     df["emotion_tags"] = df["emotion_tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     return df
