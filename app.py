@@ -54,9 +54,14 @@ else:
     st.write(anime.get("synopsis", "No synopsis available."))
 
     # -------- Trailer --------
-    if anime.get("trailer_url"):
-        st.markdown("### 🎬 Watch Trailer")
-        st.video(anime["trailer_url"])
+    trailer_url = anime.get("trailer_url", "").strip()
+
+    if trailer_url and ("youtube.com" in trailer_url or "youtu.be" in trailer_url or trailer_url.endswith(".mp4")):
+    st.markdown("### 🎬 Watch Trailer")
+    st.video(trailer_url)
+    else:
+    st.markdown("### 🎬 Watch Trailer")
+    st.info("Trailer not available or invalid link.")
 
     # -------- Watch on MAL --------
     if anime.get("watch_url"):
