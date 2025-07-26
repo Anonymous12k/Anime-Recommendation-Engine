@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import urllib.parse
 import ast
+import urllib.parse
 import random
 
 # ---------------------- Config ----------------------
@@ -10,7 +10,7 @@ st.set_page_config(page_title="MoodFlix Anime Recommender", layout="wide")
 # ---------------------- Load Data ----------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("anime_dataset.csv")  # Includes 'watch_url' and 'trailer_url'
+    df = pd.read_csv("anime_dataset.csv")
     df["genres"] = df["genres"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     df["emotion_tags"] = df["emotion_tags"].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else [])
     return df
@@ -61,9 +61,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------- Sidebar ----------------------
-st.sidebar.header("🧠 Select Your Emotion")
+st.sidebar.header("🧠 Filter Your Mood")
 emotion_options = ["Any"] + sorted(set(e for tags in df["emotion_tags"] for e in tags))
 selected_emotion = st.sidebar.selectbox("Choose an emotion:", emotion_options)
+
+genre_options = ["Any"] + sorted(set(g for tags in df["genres"] for g in tags))
+selected_genre = st.sidebar.selectbox("Choose a genre:", genre_options)
 
 if st.session_state.page != "favorites":
     if st.sidebar.button("⭐ View Favorites"):
@@ -75,7 +78,6 @@ if st.session_state.page == "details":
     anime = st.session_state.selected_anime
     st.markdown(f"<div class='detail-box'>", unsafe_allow_html=True)
 
-    # Ensure proper type and fallback
     title = anime.get("title", "Unknown Title")
     genres = anime.get("genres", [])
     emotions = anime.get("emotion_tags", [])
@@ -87,25 +89,19 @@ if st.session_state.page == "details":
     st.markdown(f"**Emotions:** {', '.join(emotions)}")
     st.markdown(f"**Synopsis:** {synopsis}")
 
-    # Show Poster if valid
-    if isinstance(image_url, str) and image_url.strip() != "":
+    if image_url:
         st.image(image_url, width=300)
-    else:
-        st.warning("No poster available.")
 
-    # Trailer & Watch buttons
     buttons_html = ""
     trailer_url = anime.get("trailer_url", "")
-    watch_url = anime.get("watch_url", "")
+    watch_url = f"https://myanimelist.net/anime?q={urllib.parse.quote(title)}"
 
-    if isinstance(trailer_url, str) and trailer_url.strip() != "":
+    if trailer_url:
         buttons_html += f"<a href='{trailer_url}' target='_blank'><button style='background-color:#8e44ad;color:white;padding:10px;border:none;border-radius:5px;'>🎞️ Watch Trailer</button></a>"
-    if isinstance(watch_url, str) and watch_url.strip() != "":
-        buttons_html += f"<a href='{watch_url}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;'>▶️ Watch Anime</button></a>"
+    buttons_html += f"<a href='{watch_url}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;'>▶️ Watch Anime</button></a>"
 
     st.markdown(buttons_html, unsafe_allow_html=True)
 
-    # Favorites button
     if title in st.session_state.favorites:
         if st.button("❌ Remove from Favorites"):
             st.session_state.favorites.remove(title)
@@ -136,7 +132,7 @@ elif st.session_state.page == "favorites":
                 st.markdown(f"<div class='anime-card'>", unsafe_allow_html=True)
                 st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
-                if isinstance(row["image_url"], str) and row["image_url"].strip() != "":
+                if row["image_url"]:
                     st.image(row["image_url"], use_container_width=True)
 
                 if st.button("📖 View Details", key=f"view_fav_{i}"):
@@ -157,49 +153,31 @@ else:
     st.title("MoodFlix Anime Recommender")
     st.markdown("Find anime based on how you feel 🎭")
 
-    # ---------- Search Bar ----------
-    all_titles = df["title"].dropna().unique()
-    search_query = st.selectbox("🔍 Search for an Anime (or use filters below):", [""] + list(all_titles))
+    # Search
+    search_query = st.text_input("🔍 Search Anime by Title")
+    filtered_df = df
 
     if search_query:
-        selected_row = df[df["title"] == search_query].iloc[0].to_dict()
-        mal_url = selected_row.get("watch_url", f"https://myanimelist.net/anime.php?q={urllib.parse.quote(search_query)}")
-        st.markdown(f"🎯 Found **{search_query}**! [Open on MyAnimeList 🚀]({mal_url})", unsafe_allow_html=True)
+        filtered_df = filtered_df[filtered_df["title"].str.contains(search_query, case=False, na=False)]
 
-    # ---------- Genre Filter ----------
-    all_genres = sorted(set(g for genre_list in df["genres"] for g in genre_list))
-    selected_genre = st.sidebar.selectbox("🎞️ Choose a Genre (Optional):", ["Any"] + all_genres)
-
-    # ---------- Filter Data ----------
-    filtered_df = df.copy()
-    if selected_emotion.lower() != "any":
+    if selected_emotion != "Any":
         filtered_df = filtered_df[filtered_df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
-    if selected_genre.lower() != "any":
+
+    if selected_genre != "Any":
         filtered_df = filtered_df[filtered_df["genres"].apply(lambda genres: selected_genre in genres)]
 
     if filtered_df.empty:
-        st.warning("😢 No anime found matching your filters.")
+        st.warning("No anime found for this filter.")
     else:
-        sample_df = filtered_df.sample(n=min(9, len(filtered_df)))
         cols = st.columns(3)
-
-        for i, (_, row) in enumerate(sample_df.iterrows()):
+        for i, (_, row) in enumerate(filtered_df.iterrows()):
             with cols[i % 3]:
                 st.markdown(f"<div class='anime-card'>", unsafe_allow_html=True)
-                st.markdown(f"<div class='anime-title'>{row['title']}</div>", unsafe_allow_html=True)
+                st.markdown(f"**{row['title']}**")
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
                 st.markdown(f"_Emotions:_ {', '.join(row['emotion_tags'])}")
-
-                if isinstance(row["image_url"], str) and row["image_url"].strip():
+                if row["image_url"]:
                     st.image(row["image_url"], use_container_width=True)
-
-                # Redirect to MAL (watch_url)
-                watch_url = row.get("watch_url", "")
-                if isinstance(watch_url, str) and watch_url.strip() != "":
-                    st.markdown(
-                        f"<a href='{watch_url}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;width:100%;'>▶️ Watch on MAL</button></a>",
-                        unsafe_allow_html=True
-                    )
 
                 if st.button("📖 View Details", key=f"view_{i}"):
                     st.session_state.selected_anime = row.to_dict()
