@@ -34,11 +34,15 @@ streamlit run app.py
 
 |
 ├── app.py  # Main Streamlit application
+
 |
+
 ├── anime_with_emotion.csv
 |
+
 ├── anime_with_extended_emotion.csv
 |
+
 ├── anime_dataset.csv     # Anime dataset with titles, moods, links, etc.
 
 📅 Dataset Columns Used
