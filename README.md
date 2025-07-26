@@ -56,8 +56,6 @@ MoodFlix was created as a portfolio project to demonstrate Streamlit app develop
 Developed by KishoreLinkedIn Profile:www.linkedin.com/in/kishore-l-33037a345
 
 
-📲 Demo
+📲 Website link
 
-Add a short screen recording or a Streamlit Cloud link here:
-
-Live Demo:https://moodflix-anime.streamlit.app/
+Streamlit Cloud link here:https://moodflix-anime.streamlit.app/
