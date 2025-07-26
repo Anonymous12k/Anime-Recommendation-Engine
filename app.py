@@ -53,15 +53,14 @@ else:
     st.markdown("### 📖 Synopsis")
     st.write(anime.get("synopsis", "No synopsis available."))
 
-    # -------- Trailer --------
+       # -------- Trailer --------
     trailer_url = anime.get("trailer_url", "").strip()
 
-st.markdown("### 🎬 Watch Trailer")
-if trailer_url and ("youtube.com" in trailer_url or "youtu.be" in trailer_url or trailer_url.endswith(".mp4")):
-    st.video(trailer_url)
-else:
-    st.info("Trailer not available or invalid link.")
-
+    st.markdown("### 🎬 Watch Trailer")
+    if trailer_url and ("youtube.com" in trailer_url or "youtu.be" in trailer_url or trailer_url.endswith(".mp4")):
+        st.video(trailer_url)
+    else:
+        st.info("Trailer not available or invalid link.")
 
     # -------- Watch on MAL --------
     if anime.get("watch_url"):
@@ -73,7 +72,7 @@ else:
 
     is_favorite = anime['title'] in st.session_state.favorites
     fav_button_label = "❤️" if is_favorite else "🤍"
-    
+
     if st.button(fav_button_label + " Add to Favorites"):
         if is_favorite:
             st.session_state.favorites.remove(anime['title'])
