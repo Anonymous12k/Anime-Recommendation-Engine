@@ -156,23 +156,49 @@ else:
     st.title("MoodFlix Anime Recommender")
     st.markdown("Find anime based on how you feel 🎭")
 
-    filtered_df = (
-        df.sample(n=min(9, len(df))) if selected_emotion.lower() == "any"
-        else df[df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
-    )
+    # ---------- Search Bar ----------
+    all_titles = df["title"].dropna().unique()
+    search_query = st.selectbox("🔍 Search for an Anime (or use filters below):", [""] + list(all_titles))
+
+    if search_query:
+        selected_row = df[df["title"] == search_query].iloc[0].to_dict()
+        mal_url = selected_row.get("watch_url", f"https://myanimelist.net/anime.php?q={urllib.parse.quote(search_query)}")
+        st.markdown(f"🎯 Found **{search_query}**! [Open on MyAnimeList 🚀]({mal_url})", unsafe_allow_html=True)
+
+    # ---------- Genre Filter ----------
+    all_genres = sorted(set(g for genre_list in df["genres"] for g in genre_list))
+    selected_genre = st.sidebar.selectbox("🎞️ Choose a Genre (Optional):", ["Any"] + all_genres)
+
+    # ---------- Filter Data ----------
+    filtered_df = df.copy()
+    if selected_emotion.lower() != "any":
+        filtered_df = filtered_df[filtered_df["emotion_tags"].apply(lambda tags: selected_emotion in tags)]
+    if selected_genre.lower() != "any":
+        filtered_df = filtered_df[filtered_df["genres"].apply(lambda genres: selected_genre in genres)]
 
     if filtered_df.empty:
-        st.warning("No anime found for this emotion.")
+        st.warning("😢 No anime found matching your filters.")
     else:
+        sample_df = filtered_df.sample(n=min(9, len(filtered_df)))
         cols = st.columns(3)
-        for i, (_, row) in enumerate(filtered_df.iterrows()):
+
+        for i, (_, row) in enumerate(sample_df.iterrows()):
             with cols[i % 3]:
                 st.markdown(f"<div class='anime-card'>", unsafe_allow_html=True)
-                st.markdown(f"**{row['title']}**")
+                st.markdown(f"<div class='anime-title'>{row['title']}</div>", unsafe_allow_html=True)
                 st.markdown(f"_Genres:_ {', '.join(row['genres'])}")
                 st.markdown(f"_Emotions:_ {', '.join(row['emotion_tags'])}")
-                if isinstance(row["image_url"], str) and row["image_url"].strip() != "":
+
+                if isinstance(row["image_url"], str) and row["image_url"].strip():
                     st.image(row["image_url"], use_container_width=True)
+
+                # Redirect to MAL (watch_url)
+                watch_url = row.get("watch_url", "")
+                if isinstance(watch_url, str) and watch_url.strip() != "":
+                    st.markdown(
+                        f"<a href='{watch_url}' target='_blank'><button style='background-color:#e91e63;color:white;padding:10px;border:none;border-radius:5px;width:100%;'>▶️ Watch on MAL</button></a>",
+                        unsafe_allow_html=True
+                    )
 
                 if st.button("📖 View Details", key=f"view_{i}"):
                     st.session_state.selected_anime = row.to_dict()
@@ -180,3 +206,4 @@ else:
                     st.experimental_rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
+
