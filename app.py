@@ -39,6 +39,10 @@ if st.session_state.selected_anime is None:
                     st.session_state.favorites.remove(fav_title)
                     st.experimental_rerun()
 
+                if st.button("View Details", key=f"fav_details_{fav_title}"):
+                    st.session_state.selected_anime = anime_row.to_dict()
+                    st.experimental_rerun()
+
         st.markdown("---")
 
     # -------- Emotion Filter Section --------
@@ -57,14 +61,10 @@ if st.session_state.selected_anime is None:
                 st.session_state.selected_anime = row.to_dict()
                 st.experimental_rerun()
 
-            if st.button("View Details", key=f"details_{index}"):
-                st.session_state.selected_anime = row.to_dict()
-                st.experimental_rerun()
-
 else:
     anime = st.session_state.selected_anime
 
-    # -------- Back Button (just an arrow) --------
+    # -------- Back Button --------
     if st.button("⬅️"):
         st.session_state.selected_anime = None
         st.experimental_rerun()
@@ -80,9 +80,8 @@ else:
     st.markdown("### 📖 Synopsis")
     st.write(anime.get("synopsis", "No synopsis available."))
 
-       # -------- Trailer --------
+    # -------- Trailer --------
     trailer_url = anime.get("trailer_url", "").strip()
-
     st.markdown("### 🎬 Watch Trailer")
     if trailer_url and ("youtube.com" in trailer_url or "youtu.be" in trailer_url or trailer_url.endswith(".mp4")):
         st.video(trailer_url)
