@@ -179,13 +179,4 @@ else:
                     st.session_state.page = "details"
                     st.experimental_rerun()
 
-                if row["title"] in st.session_state.favorites:
-                    if st.button("❌ Remove", key=f"remove_{i}"):
-                        st.session_state.favorites.remove(row["title"])
-                        st.experimental_rerun()
-                else:
-                    if st.button("❤ Add", key=f"add_{i}"):
-                        st.session_state.favorites.append(row["title"])
-                        st.experimental_rerun()
-
                 st.markdown("</div>", unsafe_allow_html=True)
