@@ -32,7 +32,7 @@ streamlit run app.py
 
 🔹 Project Files
 
-|
+
 ├── app.py  # Main Streamlit application
 
 ├── anime_with_emotion.csv
