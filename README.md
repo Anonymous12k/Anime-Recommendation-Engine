@@ -37,13 +37,13 @@ streamlit run app.py
 
 ├── anime_with_emotion.csv
 
-├── anime_with_extended_emotion.cs
-v
+├── anime_with_extended_emotion.csv
+
 ├── anime_dataset.csv     # Anime dataset with titles, moods, links, etc.
 
 📅 Dataset Columns Used
 
-title| synopsis | genres | score | image_url | trailer_url | watch_url | emotion_tags.
+Title| synopsis | genres | score | image_url | trailer_url | watch_url | emotion_tags.
 
 💡 Idea Behind the Project
 
@@ -51,7 +51,7 @@ MoodFlix was created as a portfolio project to demonstrate Streamlit app develop
 
 👤 Author
 
-Developed by KishoreLinkedIn Profile
+Developed by KishoreLinkedIn Profile:www.linkedin.com/in/kishore-l-33037a345
 
 
 📲 Demo
