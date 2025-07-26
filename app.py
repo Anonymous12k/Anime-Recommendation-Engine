@@ -19,10 +19,33 @@ if 'selected_anime' not in st.session_state:
 
 if st.session_state.selected_anime is None:
     st.title("🎭 Anime Emotion Recommender")
+
+    # -------- Show Favorites on Home Page --------
+    if "favorites" not in st.session_state:
+        st.session_state.favorites = []
+
+    if st.session_state.favorites:
+        st.subheader("❤️ Your Favorites")
+        for fav_title in st.session_state.favorites:
+            anime_row = df[df["title"] == fav_title].iloc[0]
+            col1, col2, col3 = st.columns([1, 3, 1])
+            with col1:
+                st.image(anime_row["image_url"], width=80)
+            with col2:
+                st.markdown(f"**{anime_row['title']}**")
+                st.caption(", ".join(anime_row["genres"]))
+            with col3:
+                if st.button("❌", key=f"remove_{fav_title}"):
+                    st.session_state.favorites.remove(fav_title)
+                    st.experimental_rerun()
+
+        st.markdown("---")
+
+    # -------- Emotion Filter Section --------
     selected_emotion = st.selectbox("Choose your emotion", sorted(set(tag for tags in df['emotion_tags'] for tag in tags)))
-    
+
     filtered_df = df[df['emotion_tags'].apply(lambda tags: selected_emotion in tags)]
-    
+
     for index, row in filtered_df.iterrows():
         col1, col2 = st.columns([1, 3])
         with col1:
@@ -30,6 +53,10 @@ if st.session_state.selected_anime is None:
         with col2:
             st.subheader(row['title'])
             st.caption(", ".join(row['genres']))
+            if st.button("View Details", key=f"details_{index}"):
+                st.session_state.selected_anime = row.to_dict()
+                st.experimental_rerun()
+
             if st.button("View Details", key=f"details_{index}"):
                 st.session_state.selected_anime = row.to_dict()
                 st.experimental_rerun()
