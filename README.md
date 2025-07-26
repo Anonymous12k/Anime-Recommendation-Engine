@@ -19,6 +19,7 @@ MoodFlix is a lightweight and user-friendly anime recommendation engine built us
 1. Clone the repository
 
 git clone https:https://github.com/Anonymous12k/Anime-Recommendation-Engine
+
 cd Anime-Recommendation-Engine
 
 2. Install required packages
@@ -33,8 +34,11 @@ streamlit run app.py
 
 .
 ├── app.py  # Main Streamlit application
+
 ├── anime_with_emotion.csv
-├── anime_with_extended_emotion.csv
+
+├── anime_with_extended_emotion.cs
+v
 ├── anime_dataset.csv     # Anime dataset with titles, moods, links, etc.
 
 📅 Dataset Columns Used
